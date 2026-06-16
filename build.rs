@@ -40,6 +40,24 @@ fn main() {
         builder.include("ffmpeg/linux/release/include");
     }
 
+    #[cfg(target_os = "macos")]
+    {
+        // GoDesk #243: macOS hwcodec — FFmpeg from vcpkg per-arch (arm64-osx /
+        // x64-osx) since this hwcodec commit bundles only windows/linux ffmpeg.
+        let arch = std::env::var("CARGO_CFG_TARGET_ARCH").unwrap_or_default();
+        let triplet = if arch == "x86_64" { "x64-osx" } else { "arm64-osx" };
+        let vcpkg = std::env::var("VCPKG_ROOT").expect("VCPKG_ROOT for macOS hwcodec");
+        let base = format!("{}/installed/{}", vcpkg, triplet);
+        println!("cargo:rustc-link-search=native={}/lib", base);
+        ["avformat", "avfilter", "avdevice", "avcodec", "swscale", "swresample", "avutil"]
+            .map(|lib| println!("cargo:rustc-link-lib=static={}", lib));
+        ["CoreFoundation", "CoreVideo", "CoreMedia", "VideoToolbox", "AVFoundation", "AudioToolbox", "Security", "CoreServices", "CoreImage", "AppKit", "OpenGL", "Metal", "CoreGraphics", "QuartzCore"]
+            .map(|fw| println!("cargo:rustc-link-lib=framework={}", fw));
+        ["c++", "m", "z", "bz2", "lzma", "iconv"]
+            .map(|lib| println!("cargo:rustc-link-lib={}", lib));
+        builder.include(format!("{}/include", base));
+    }
+
     builder
         .file("src/encode.c")
         .file("src/decode.c")

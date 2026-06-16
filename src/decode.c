@@ -55,7 +55,7 @@ Decoder *new_decoder(const char *name, int device_type,
     goto _exit;
   }
 
-  c->flags |= AV_CODEC_CAP_TRUNCATED;
+  // GoDesk #243: AV_CODEC_CAP_TRUNCATED removed in FFmpeg 6+; truncated mode obsolete
   c->flags |= AV_CODEC_FLAG_LOW_DELAY;
   c->thread_count = 4;
   c->thread_type = FF_THREAD_SLICE;
